@@ -1,5 +1,9 @@
 define(['config'], function(config) {
-  function ApiManager() {
+
+  var app;
+
+  function ApiManager(_app) {
+    app = _app;
     this.loadGapi();
   }
 
@@ -20,6 +24,25 @@ define(['config'], function(config) {
       }
 
       function handleAuthResult(authResult) {
+        var authTimeout;
+
+        if (authResult && !authResult.error) {
+          // Schedule a check when the authentication token expires
+          if (authResult.expires_in) {
+            authTimeout = (authResult.expires_in - 5 * 60) * 1000;
+            setTimeout(checkAuth, authTimeout);
+          }
+
+          app.views.auth.$el.hide();
+          $('#signed-in-container').show();
+        } else {
+          if (authResult && authResult.error) {
+            // TODO: Show error
+            console.error('Unable to sign in:', authResult.error);
+          }
+
+          app.views.auth.$el.show();
+        }
       }
 
       handleClientLoad();
